@@ -100,7 +100,7 @@ PARTICLE* generateParticles(int WIDTH, int HEIGHT) {
   for (int i = -(blockWidth / 2); i < blockWidth / 2; i++) {
     for (int j = -(blockWidth / 2); j < blockWidth / 2; j++) {
       // printf("%d - (%d, %d)\n", index, WIDTH / 2 + i, HEIGHT / 2 + j);
-      PARTICLE p = {WIDTH / 2 + i, HEIGHT / 2 + j, WIDTH / 2 + i, HEIGHT / 2 + j, 0, 1};
+      PARTICLE p = {WIDTH / 2 + i, HEIGHT / 2 + j, WIDTH / 2 + i, HEIGHT / 2 + j, -1, 1};
       particles[index] = p;
       index++;
     }
@@ -125,7 +125,7 @@ int main(void) {
 
   while (1) {
     updateParticles(particles, WIDTH, HEIGHT);
-    space = create2DSpace(WIDTH, HEIGHT); // resset grid space
+    // space = create2DSpace(WIDTH, HEIGHT); // resset grid space
     update2DSpace(particles, space);
     render(space, WIDTH, HEIGHT);
     usleep(0.5 * micro);
