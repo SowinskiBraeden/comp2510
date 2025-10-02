@@ -13,8 +13,7 @@ void drawLine(
     int x2,
     int y2,
     char **matrix,
-    int h,
-    int flipYAxis
+    int h
 )
 {
     int x, y;
@@ -36,8 +35,7 @@ void drawLine(
             y--;
         }
 
-        if (flipYAxis) *(*(matrix + x) + (h - 1 - y)) = '*';
-        else *(*(matrix + x) + y) = '*';
+        *(*(matrix + x) + (h - 1 - y)) = '*';
     }
 }
 
@@ -109,7 +107,7 @@ void drawShape(
             int nextX = *(*(coords + i + 1));
             int nextY = *(*(coords + i + 1) + 1);
 
-            drawLine(x, y, nextX, nextY, matrix, height, 1);
+            drawLine(x, y, nextX, nextY, matrix, height);
         }
     }
 
@@ -128,7 +126,7 @@ void drawShape(
                     }
                 }
 
-                drawLine(x, y, endX, y, matrix, height, 0);
+                drawLine(x, y, endX, y, matrix, y * 2 + 1);
             }
             break;
         }
