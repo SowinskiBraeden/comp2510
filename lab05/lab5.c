@@ -7,41 +7,46 @@
 
 // Absolutely no array notation anywhere
 
+// A01385066
+
+typedef struct {
+    int x;
+    int y;
+} vector;
+
 void drawLine(
-    int x1,
-    int y1,
-    int x2,
-    int y2,
+    vector start,
+    vector end,
     char **matrix,
     int h
 )
 {
-    int x, y;
+    vector new;
 
-    x = x1;
-    y = y1;
+    new.x = start.x;
+    new.y = start.y;
 
-    while (x != x2 || y != y2)
+    while (new.x != end.x || new.y != end.y)
     {
-        if (x2 > x) {
-            x++;
-        } else if (x2 < x) {
-            x--;
+        *(*(matrix + new.x) + (h - 1 - new.y)) = '*';
+
+        if (end.x > new.x) {
+            new.x++;
+        } else if (end.x < new.x) {
+            new.x--;
         }
 
-        if (y2 > y) {
-            y++;
-        } else if (y2 < y) {
-            y--;
+        if (end.y > new.y) {
+            new.y++;
+        } else if (end.y < new.y) {
+            new.y--;
         }
-
-        *(*(matrix + x) + (h - 1 - y)) = '*';
     }
 }
 
 void drawShape(
     char *outputPath,
-    int **coords,
+    vector *coords,
     int numCoords,
     int width,
     int height
@@ -94,45 +99,41 @@ void drawShape(
         }
     }
 
-    // Plot coordinates in matrix
+    // draw lines between each coordinate
     for (int i = 0; i < numCoords; i++)
     {
-        int x = *(*(coords + i));
-        int y = *(*(coords + i) + 1);
-        *(*(matrix + x) + (height - 1 - y)) = '*';
+        vector start = *(coords + i);
 
-        // draw line between coordinates
         if (i < numCoords - 1)
         {
-            int nextX = *(*(coords + i + 1));
-            int nextY = *(*(coords + i + 1) + 1);
+            vector end = *(coords + i + 1);
 
-            drawLine(x, y, nextX, nextY, matrix, height);
+            drawLine(start, end, matrix, height);
         }
     }
 
     // Check for spaces in matrix surrounded by coords
     for (int y = 0; y < height; y++)
     {
-        int endX;
         for (int x = 0; x < width; x++)
         {
             if (*(*(matrix + x) + y) == '*')
             {
+                int endX;
                 for (int i = x; i < width; i++)
                 {
-                    if (*(*(matrix + i) + y) == '*') {
-                        endX = i;
-                    }
+                    if (*(*(matrix + i) + y) == '*') endX = i;
                 }
 
-                drawLine(x, y, endX, y, matrix, y * 2 + 1);
+                if (endX == x) continue;
+
+                vector start = {x, y};
+                vector end   = {endX, y};
+                drawLine(start, end, matrix, y * 2 + 1);
+                break;
             }
-            break;
         }
     }
-
-    // Clear spaces
 
     // matrix to output file
     for (int y = 0; y < height; y++)
@@ -188,12 +189,12 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    int **coords;
+    vector *coords;
     int numCoords;
     int width, height;
 
     numCoords = 0;
-    coords = malloc(MAX_COORDS * sizeof(int*));
+    coords = malloc(MAX_COORDS * sizeof(vector));
 
     if (coords == NULL)
     {
@@ -201,46 +202,24 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    for (int i = 0; i < MAX_COORDS; i++)
-    {
-        *(coords + i) = malloc(COORD_2D * sizeof(int));
-
-        if (*(coords + i) == NULL)
-        {
-            perror("Failed to malloc coords entry\n");
-
-            for (int j = 0; j < i; j++)
-            {
-                free(*(coords + j));
-            }
-            free(coords);
-
-            return 1;
-        }
-    }
-
     while (numCoords < MAX_COORDS)
     {
-        int x, y;
+        vector coord;
 
-        if (fscanf(inputFile, "%d,%d", &x, &y) == 2)
+        if (fscanf(inputFile, "%d,%d", &coord.x, &coord.y) == 2)
         {
-            if (x > width)  width  = x;
-            if (y > height) height = y;
+            if (coord.x > width)  width  = coord.x;
+            if (coord.y > height) height = coord.y;
 
-            *(*(coords + numCoords))     = x;
-            *(*(coords + numCoords) + 1) = y;
+            *(coords + numCoords) = coord;
             numCoords++;
         }
         else
         {
-            if (fscanf(inputFile, "%d", &x) == 0 ||
-                fscanf(inputFile, "%d", &x) == 0)
+            if (fscanf(inputFile, "%d", &coord.x) == 0 ||
+                fscanf(inputFile, "%d", &coord.x) == 0)
             {
                 // Free and close file before exiting
-                for (int i = 0; i < MAX_COORDS; i++) {
-                    free(coords[i]);
-                }
                 free(coords);
                 fclose(inputFile);
 
@@ -249,11 +228,10 @@ int main(int argc, char **argv)
             }
 
             char c;
-            if (fscanf(inputFile, " %c", &c) == 1 && c == 'E') {
-                break;
-            } else {
+            if (fscanf(inputFile, "%c", &c) == 1 && c == 'E') {
                 break;
             }
+
         }
     }
 
@@ -266,6 +244,8 @@ int main(int argc, char **argv)
         ++width,
         ++height
     );
+
+    free(coords);
 
     return 0;
 }
