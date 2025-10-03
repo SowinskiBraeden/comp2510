@@ -94,7 +94,7 @@ void drawShape(
         }
     }
 
-    // Insert coords into matrix
+    // Plot coordinates in matrix
     for (int i = 0; i < numCoords; i++)
     {
         int x = *(*(coords + i));
@@ -132,14 +132,28 @@ void drawShape(
         }
     }
 
+    // Clear spaces
+
     // matrix to output file
     for (int y = 0; y < height; y++)
     {
-        for (int x = 0; x < width; x++)
+        // only print up until last '*', dont
+        // print trailing spaces
+        int lastPoint;
+        for (int i = width - 1; i >= 0; i--)
+        {
+            if (*(*(matrix + i) + y) == '*')
+            {
+                lastPoint = i;
+                break;
+            }
+        }
+
+        for (int x = 0; x <= lastPoint; x++)
         {
             fputc(*(*(matrix + x) + y), writeFile);
         }
-        fputc('\n', writeFile);
+        if (y < height - 1) fputc('\n', writeFile);
     }
 
     fclose(writeFile);
@@ -187,7 +201,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    for (int i = 0; i< MAX_COORDS; i++)
+    for (int i = 0; i < MAX_COORDS; i++)
     {
         *(coords + i) = malloc(COORD_2D * sizeof(int));
 
@@ -220,6 +234,20 @@ int main(int argc, char **argv)
         }
         else
         {
+            if (fscanf(inputFile, "%d", &x) == 0 ||
+                fscanf(inputFile, "%d", &x) == 0)
+            {
+                // Free and close file before exiting
+                for (int i = 0; i < MAX_COORDS; i++) {
+                    free(coords[i]);
+                }
+                free(coords);
+                fclose(inputFile);
+
+                perror("Error: bad input file\n");
+                return 1;
+            }
+
             char c;
             if (fscanf(inputFile, " %c", &c) == 1 && c == 'E') {
                 break;
