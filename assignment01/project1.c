@@ -1,8 +1,27 @@
 #include <stdio.h>
 
+
+/*
+* Course: COMP 2510
+* Assignment: Assignment 1
+* Name: Braeden Sowinski
+* Student ID: A01385066
+* Date: 2025-09-20
+* Description: Calculate download speeds from
+*              given file size and download speed
+*/
+
 #define MEGABYTES_TO_MEGABITS 8
 
-int main(void) {
+/**
+ * main program entry
+ *
+ * takes in user input for download speed
+ * int Mbs and file size in MBs
+ * and calculates the download speed
+ */
+int main(void)
+{
 	float downloadSpeedMbs;
 	float fileSizeMB;
 	float downloadTimeSeconds;

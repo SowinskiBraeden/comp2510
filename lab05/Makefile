@@ -5,7 +5,7 @@ CFLAGS = -Wall -std=c11
 #Input file
 INPUT = input2.txt
 OUTPUT = output.txt
-REF = ref2.txt
+REF = ref.txt
 # Source file
 SRCS = lab5.c
 # Output
