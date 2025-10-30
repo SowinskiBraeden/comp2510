@@ -1,8 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define SIGN_MASK 0x0000000000000001
-
 long getClamp(long q, long min, long max)
 {
     long diffToMin;
@@ -12,8 +10,8 @@ long getClamp(long q, long min, long max)
 
     diffToMin = q + (~min + 1);
     diffToMax = q + (~max + 1);
-    diffToMinSign = (diffToMin >> 63) & SIGN_MASK;
-    diffToMaxSign = (diffToMax >> 63) & SIGN_MASK;
+    diffToMinSign = (diffToMin >> 63);
+    diffToMaxSign = (diffToMax >> 63);
 
     // If diff to min is 0, or the diff to min
     // is greater than the min (positive sign),
