@@ -23,6 +23,8 @@
 #define CHAR 4
 #define STRING 5
 
+char A_NUMBER[] = "A01385066";
+
 typedef struct NODE
 {
     void        *data;
