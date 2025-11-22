@@ -8,6 +8,16 @@
 #define STRING  3
 #define BUFFER_SIZE 256
 
+/*
+* Course: COMP 2510
+* Assignment: Assignment 3
+* Name: Braeden Sowinski
+* Student ID: A01385066
+* Date: 2025-11-22
+* Description: Demo a generic swap function to swap
+*              void pointers based on a user input.
+*/
+
 void swap(void *a, void *b, size_t size)
 {
     void *tmp;

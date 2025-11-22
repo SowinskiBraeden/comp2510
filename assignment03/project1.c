@@ -8,6 +8,17 @@
 #define INSERTION_SORT 1
 #define SELECTION_SORT 2
 
+/*
+* Course: COMP 2510
+* Assignment: Assignment 3
+* Name: Your Full Name
+* Student ID: 12345678
+* Date: 2025-09-18
+* Description: demo insertion sort & selection sort
+*              by sorting an array of integers input
+*              by the user.
+*/
+
 void insertionSort(int *arr, size_t size)
 {
     if (size < MIN_SIZE)
