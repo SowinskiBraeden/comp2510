@@ -8,19 +8,20 @@
 #define INPUT_FILE 1
 #define OUTPUT_FILE 2
 #define EXPECTED_INPUT 1
+#define READING 1
+#define ERROR_CODE 1
+#define OK_CODE 0
+#define MAX_STRING_LEN 256
+#define IS_EQUAL 0
+#define INDEX_OFFSET 1
+#define BASE_TEN 10
+#define DOUBLE 2
 
 #define SHORT 1
 #define INTEGER 2
 #define FLOAT 3
 #define CHAR 4
 #define STRING 5
-
-#define MAX_STRING_LEN 256
-#define READING 1
-#define IS_EQUAL 0
-#define INDEX_OFFSET 1
-#define BASE_TEN 10
-#define DOUBLE 2
 
 typedef struct NODE
 {
@@ -57,106 +58,63 @@ void freeList(NODE *head)
 NODE* readFile(char *filepath, int *type, int *count)
 {
     FILE *file;
-
     file = fopen(filepath, "r");
 
     if (file == NULL)
     {
-        // printf("Failed to read file %s\n", filepath);
         return NULL;
     }
 
     if (fscanf(file, "%d", type) != EXPECTED_INPUT)
     {
-        // printf("Error: failed to read type from file\n");
         fclose(file);
         return NULL;
     }
 
-    int ch; // skip new line characters and EOF
+    int ch; // skip newlines characters and EOF
     while ((ch = fgetc(file)) != '\n' && ch != EOF) {}
 
-    NODE *head;
-    char token[MAX_STRING_LEN];
+    char   *format;
+    NODE   *head;
+    size_t size;
 
     head   = NULL;
     *count = 0;
 
+    format = *type == SHORT   ? "%hd" :
+             *type == INTEGER ? "%d"  :
+             *type == FLOAT   ? "%f"  :
+             " %c";
+
+    size = *type == SHORT   ? sizeof(short) :
+           *type == INTEGER ? sizeof(int)   :
+           *type == FLOAT   ? sizeof(float) :
+           *type == CHAR    ? sizeof(char)  :
+           MAX_STRING_LEN;
+
     while (READING)
     {
-        // read till comma or new line
-        if (fscanf(file, " %255[^,\n]", token) != EXPECTED_INPUT)
-        {
-            break;
-        }
-
-        // end of file
-        if (strcmp(token, "E") == IS_EQUAL)
-        {
-            break;
-        }
-
         void *data;
 
-        data = NULL;
+        data = malloc(size);
 
-        switch (*type)
+        if (*type == STRING)
         {
-            case SHORT:
+            if (fscanf(file, "%255[^,\n]", (char *)data) != EXPECTED_INPUT ||
+                strcmp((char *)data, "E") == IS_EQUAL)
             {
-                long value;
-
-                value = strtol(token, NULL, BASE_TEN);
-
-                if (value < SHRT_MIN || value > SHRT_MAX)
-                {
-                    // printf("Error: %ld is out of range for SHORT type (%d to %d)\n",
-                    //     value, SHRT_MIN, SHRT_MAX);
-
-                    fclose(file);
-                    freeList(head);
-                    return NULL;
-                }
-
-                data = malloc(sizeof(short));
-                *(short *)data = (short)value;
+                free(data);
                 break;
             }
-
-
-            case INTEGER:
+        }
+        else
+        {
+            if (fscanf(file, format, data) != EXPECTED_INPUT ||
+                *type == CHAR && *(char *)data == 'E')
             {
-                data = malloc(sizeof(int));
-                *(int *)data = atoi(token);
+                free(data);
                 break;
             }
-
-            case FLOAT:
-            {
-                data = malloc(sizeof(float));
-                *(float *)data = atof(token);
-                break;
-            }
-
-            case CHAR:
-            {
-                data = malloc(sizeof(char));
-                *(char *)data = token[0];
-                break;
-            }
-
-            case STRING:
-            {
-                data = malloc(MAX_STRING_LEN);
-                strncpy((char *)data, token, MAX_STRING_LEN - INDEX_OFFSET);
-                ((char *)data)[MAX_STRING_LEN - INDEX_OFFSET] = '\0';
-                break;
-            }
-
-            default:
-                // printf("Error: Bad input type\n");
-                fclose(file);
-                return NULL;
         }
 
         insertNode(&head, data);
@@ -167,7 +125,6 @@ NODE* readFile(char *filepath, int *type, int *count)
         {
             break;
         }
-
         if (ch == '\n')
         {
             continue;
@@ -178,68 +135,42 @@ NODE* readFile(char *filepath, int *type, int *count)
     return head;
 }
 
-void printList(NODE *head, int type)
-{
-    while (head != NULL)
-    {
-        switch (type)
-        {
-            case SHORT:   printf("%hd -> ",  *(short *)head->data); break;
-            case INTEGER: printf("%d -> ",   *(int *)  head->data); break;
-            case FLOAT:   printf("%.1f -> ", *(float *)head->data); break;
-            case CHAR:    printf("%c -> ",   *(char *) head->data); break;
-            case STRING:  printf("%s -> ",    (char *) head->data); break;
-        }
-
-        head = head->next;
-    }
-
-    printf("null\n");
-}
-
 int compare(void *a, void *b, int type)
 {
-    switch (type)
+    if (type == SHORT || type == INTEGER)
     {
-        case SHORT:
-        case INTEGER:
-        {
-            int va;
-            int vb;
+        int va;
+        int vb;
 
-            va = *(int *)a;
-            vb = *(int *)b;
+        va = *(int *)a;
+        vb = *(int *)b;
 
-            return (va > vb) - (va < vb);
-        }
-
-        case FLOAT:
-        {
-            int va;
-            int vb;
-
-            va = *(float *)a;
-            vb = *(float *)b;
-
-            return (va > vb) - (va < vb);
-        }
-
-        case CHAR:
-        {
-            char va;
-            char vb;
-
-            va = *(char *)a;
-            vb = *(char *)b;
-
-            return (va > vb) - (va < vb);
-        }
-
-        case STRING:
-            return strcmp((char *)a, (char *)b);
+        return (va > vb) - (va < vb);
     }
 
-    return 0;
+    if (type == FLOAT)
+    {
+        float va;
+        float vb;
+
+        va = *(float *)a;
+        vb = *(float *)b;
+
+        return (va > vb) - (va < vb);
+    }
+
+    if (type == CHAR)
+    {
+        char va;
+        char vb;
+
+        va = *(char *)a;
+        vb = *(char *)b;
+
+        return (va > vb) - (va < vb);
+    }
+
+    return strcmp((char *)a, (char *)b);
 }
 
 NODE* split(NODE *head)
@@ -305,69 +236,70 @@ NODE* mergeSort(NODE *head, int type)
     return merge(head, second, type);
 }
 
-void writeOutput(char *filePath, char *data)
+void printValue(FILE *file, void *data, int type)
+{
+    if (type == SHORT)
+    {
+        short v;
+        v = *(short *)data;
+        fprintf(file, "%hd", v);
+        return;
+    }
+
+    if (type == INTEGER)
+    {
+        int v;
+        v = *(int *)data;
+        fprintf(file, "%d", v);
+        return;
+    }
+
+    if (type == FLOAT)
+    {
+        float v;
+        v = *(float *)data;
+        fprintf(file, "%.1f", v);
+        return;
+    }
+
+    if (type == CHAR)
+    {
+        char v;
+        v = *(char *)data;
+        fprintf(file, "%c", v);
+        return;
+    }
+
+    fprintf(file, "%s", (char *)data);
+}
+
+void writeOutput(char *filepath, NODE *head, int type, int isError)
 {
     FILE *file;
 
-    file = fopen(filePath, "w");
+    file = fopen(filepath, "w");
 
-    fputs(data, file);
-    fputs("\n", file);
-
-    fclose(file);
-}
-
-char* toString(NODE *head, int type)
-{
-    size_t capacity;
-    char   *result;
-
-    capacity  = MAX_STRING_LEN;
-    result    = malloc(capacity);
-    result[0] = '\0';
-
-    char temp[MAX_STRING_LEN];
+    if (isError == 1)
+    {
+        fputs("Error\n", file);
+        fclose(file);
+        return;
+    }
 
     while (head != NULL)
     {
-        switch (type)
-        {
-            case SHORT:
-                snprintf(temp, sizeof(temp), "%hd", *(short *)head->data);
-                break;
-
-            case INTEGER:
-                snprintf(temp, sizeof(temp), "%d", *(int *)head->data);
-                break;
-
-            case FLOAT:
-                snprintf(temp, sizeof(temp), "%.1f", *(float *)head->data);
-                break;
-
-            case CHAR:
-                snprintf(temp, sizeof(temp), "%c", *(char *)head->data);
-                break;
-
-            case STRING:
-                snprintf(temp, sizeof(temp), "%s", (char *)head->data);
-                break;
-        }
-
-        while (strlen(result) + strlen(temp) + 2 >= capacity)
-        {
-            capacity *= DOUBLE;
-            result = realloc(result, capacity);
-        }
-
-        strcat(result, temp);
+        printValue(file, head->data, type);
 
         if (head->next != NULL)
-            strcat(result, ",");
+        {
+            fputc(',', file);
+        }
 
         head = head->next;
     }
 
-    return result;
+    fputc('\n', file);
+    fclose(file);
 }
 
 int main(int argc, char *argv[])
@@ -386,26 +318,13 @@ int main(int argc, char *argv[])
 
     if (head == NULL)
     {
-        writeOutput(argv[OUTPUT_FILE], "Error");
-        // printf("Failed to read list.\n");
+        writeOutput(argv[OUTPUT_FILE], head, type, ERROR_CODE);
         return 1;
     }
 
-    printf("\nOriginal:\n");
-    printList(head, type);
-    printf("\n");
-
     head = mergeSort(head, type);
 
-    char *listString;
-
-    listString = toString(head, type);
-
-    writeOutput(argv[OUTPUT_FILE], listString);
-
-    printf("Sorted:\n");
-    printList(head, type);
-    printf("\n");
+    writeOutput(argv[OUTPUT_FILE], head, type, OK_CODE);
 
     freeList(head);
 
